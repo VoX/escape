@@ -23,15 +23,13 @@ import createSpriteSystem from '../systems/sprite'
 import createPlayerSystem from '../systems/player'
 import createCPUSystem from '../systems/cpu'
 
-enum Textures
-{
+enum Textures {
 	TankBlue,
 	TankGreen,
 	TankRed
 }
 
-export default class Game extends Phaser.Scene
-{
+export default class Game extends Phaser.Scene {
 	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
 
 	private world!: IWorld
@@ -40,28 +38,24 @@ export default class Game extends Phaser.Scene
 	private movementSystem!: System
 	private spriteSystem!: System
 
-	constructor()
-	{
+	constructor() {
 		super('game')
 	}
 
-	init()
-	{
+	init() {
 		this.cursors = this.input.keyboard.createCursorKeys()
 	}
 
-	preload()
-    {
-        this.load.image('tank-blue', 'assets/tank_blue.png')
+	preload() {
+		this.load.image('tank-blue', 'assets/tank_blue.png')
 		this.load.image('tank-green', 'assets/tank_green.png')
 		this.load.image('tank-red', 'assets/tank_red.png')
-    }
+	}
 
-    create()
-    {
+	create() {
 		const { width, height } = this.scale
 
-        this.world = createWorld()
+		this.world = createWorld()
 
 		// create the player tank
 		const blueTank = addEntity(this.world)
@@ -76,11 +70,10 @@ export default class Game extends Phaser.Scene
 		Position.x[blueTank] = 100
 		Position.y[blueTank] = 100
 		Sprite.texture[blueTank] = Textures.TankBlue
-		Input.speed[blueTank] = 10
+		Input.speed[blueTank] = 5
 
 		// create random cpu tanks
-		for (let i = 0; i < 10; ++i)
-		{
+		for (let i = 0; i < 10; ++i) {
 			const tank = addEntity(this.world)
 
 			addComponent(this.world, Position, tank)
@@ -89,7 +82,7 @@ export default class Game extends Phaser.Scene
 
 			addComponent(this.world, Velocity, tank)
 			addComponent(this.world, Rotation, tank)
-			
+
 			addComponent(this.world, Sprite, tank)
 			Sprite.texture[tank] = Phaser.Math.Between(1, 2)
 
@@ -105,7 +98,7 @@ export default class Game extends Phaser.Scene
 		this.cpuSystem = createCPUSystem(this)
 		this.movementSystem = createMovementSystem()
 		this.spriteSystem = createSpriteSystem(this, ['tank-blue', 'tank-green', 'tank-red'])
-    }
+	}
 
 	update(t: number, dt: number) {
 		// run each system in desired order
