@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-Then go to http://localhost:8000
+Then go to http://localhost:1234
 
 ## License
 
