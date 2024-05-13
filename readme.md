@@ -15,7 +15,7 @@ Clone this repository with git and run:
 
 ```
 npm install
-npm run start
+npm run dev
 ```
 
 Then go to http://localhost:8000

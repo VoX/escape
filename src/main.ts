@@ -4,12 +4,16 @@ import Game from './scenes/Game'
 
 const config: Phaser.Types.Core.GameConfig = {
 	type: Phaser.AUTO,
-	width: 800,
-	height: 600,
+	width: 1024,
+	height: 768,
+	parent: 'game-container',
+	scale: {
+		mode: Phaser.Scale.FIT,
+		autoCenter: Phaser.Scale.CENTER_BOTH
+	},
 	physics: {
 		default: 'arcade',
 		arcade: {
-			gravity: { y: 200 }
 		}
 	},
 	scene: [Game]
