@@ -1,6 +1,6 @@
-/.cache
-/dist
-/node_modules
-/.DS_Store
+.cache
+dist
+node_modules
 .DS_Store
-/.parcel-cache
+.parcel-cache
+build
