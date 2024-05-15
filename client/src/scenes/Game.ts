@@ -1,112 +1,152 @@
-import Phaser from 'phaser'
-import {
-	createWorld,
-	addEntity,
-	addComponent,
-} from 'bitecs'
+import Phaser from "phaser";
+import { createWorld, addEntity, addComponent } from "bitecs";
 
-import type {
-	IWorld,
-	System
-} from 'bitecs'
+import type { IWorld, System } from "bitecs";
 
-import Position from '../components/Position'
-import Velocity from '../components/Velocity'
-import Sprite from '../components/Sprite'
-import Rotation from '../components/Rotation'
-import Player from '../components/Player'
-import CPU from '../components/CPU'
-import Input from '../components/Input'
+import CanCollide from "../components/CanCollide";
+import Collidable from "../components/Collidable";
+import Input from "../components/Input";
+// import Lemming from "../components/Lemming";
+import Position from "../components/Position";
+import Rotation from "../components/Rotation";
+import Sprite from "../components/Sprite";
+import Velocity from "../components/Velocity";
 
-import createMovementSystem from '../systems/movement'
-import createSpriteSystem from '../systems/sprite'
-import createPlayerSystem from '../systems/player'
-import createCPUSystem from '../systems/cpu'
+import createCollisionSystem from "../systems/collision";
+import createCPUSystem from "../systems/cpu";
+// import createLemmingSystem from "../systems/lemming";
+import createMovementSystem from "../systems/movement";
+import createPlayerSystem from "../systems/player";
+import createSpriteSystem from "../systems/sprite";
 
 enum Textures {
-	TankBlue,
-	TankGreen,
-	TankRed
+  Lemming,
+  Background,
+  Ground,
 }
 
 export default class Game extends Phaser.Scene {
-	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
-	private world!: IWorld
-	private playerSystem!: System
-	private cpuSystem!: System
-	private movementSystem!: System
-	private spriteSystem!: System
+  private world!: IWorld;
+  private playerSystem!: System;
+  private cpuSystem!: System;
+  private movementSystem!: System;
+  private spriteSystem!: System;
+  private collisionSystem!: System;
+  // private lemmingSystem!: System;
 
-	constructor() {
-		super('game')
-	}
+  constructor() {
+    super("game");
+  }
 
-	init() {
-		this.cursors = this.input.keyboard.createCursorKeys()
-	}
+  init() {
+    this.cursors = this.input.keyboard.createCursorKeys();
+  }
 
-	preload() {
-		this.load.image('tank-blue', 'assets/tank_blue.png')
-		this.load.image('tank-green', 'assets/tank_green.png')
-		this.load.image('tank-red', 'assets/tank_red.png')
-	}
+  preload() {
+    // background
+    this.load.image("background", "assets/background.png");
+		// floor/wall
+    this.load.image("ground", "assets/ground.png");
+    // lemming
+    this.load.image("lemming", "assets/lemming.png");
+    this.load.image("lemming-left", "assets/lemming_left.png");
+  }
 
-	create() {
-		const { width, height } = this.scale
+  create() {
+    const { width, height } = this.scale;
+    this.world = createWorld();
 
-		this.world = createWorld()
+    // background
+    this.add.image(width / 2, height / 2, "background");
 
-		// create the player tank
-		const blueTank = addEntity(this.world)
+    // create the walls
+    const wallLeft = addEntity(this.world);
+    addComponent(this.world, Position, wallLeft);
+    addComponent(this.world, Collidable, wallLeft);
+    addComponent(this.world, Sprite, wallLeft);
+    addComponent(this.world, CanCollide, wallLeft);
+    addComponent(this.world, Rotation, wallLeft);
+    Position.x[wallLeft] = 0;
+    Position.y[wallLeft] = 0;
+    Sprite.texture[wallLeft] = Textures.Ground;
+    Sprite.scaleY[wallLeft] = height;
+    Sprite.scaleX[wallLeft] = 5;
+	
+    const wallRight = addEntity(this.world);
+    addComponent(this.world, Position, wallRight);
+    addComponent(this.world, Collidable, wallRight);
+    addComponent(this.world, Sprite, wallRight);
+    addComponent(this.world, CanCollide, wallRight);
+    addComponent(this.world, Rotation, wallRight);
+    Position.x[wallRight] = width - 10;
+    Position.y[wallRight] = 0;
+    Sprite.texture[wallRight] = Textures.Ground;
+    Sprite.scaleY[wallRight] = height;
+    Sprite.scaleX[wallRight] = 5;
+	
+	
+    // create the ground
+    const ground = addEntity(this.world);
+    addComponent(this.world, Position, ground);
+    addComponent(this.world, Collidable, ground);
+    addComponent(this.world, Sprite, ground);
+    addComponent(this.world, CanCollide, ground);
+    addComponent(this.world, Rotation, ground);
+    Position.x[ground] = 0;
+    Position.y[ground] = height - 10;
+    Sprite.texture[ground] = Textures.Ground;
+    Sprite.scaleY[ground] = 5;
+    Sprite.scaleX[ground] = width * 2;
 
-		addComponent(this.world, Position, blueTank)
-		addComponent(this.world, Velocity, blueTank)
-		addComponent(this.world, Rotation, blueTank)
-		addComponent(this.world, Sprite, blueTank)
-		addComponent(this.world, Player, blueTank)
-		addComponent(this.world, Input, blueTank)
+    // create the lemming
+    const lemming = addEntity(this.world);
+    addComponent(this.world, Position, lemming);
+    addComponent(this.world, Velocity, lemming);
+    addComponent(this.world, Collidable, lemming);
+    addComponent(this.world, Rotation, lemming);
+    addComponent(this.world, Sprite, lemming);
+    // addComponent(this.world, Lemming, lemming);
+    addComponent(this.world, CanCollide, lemming);
+    // Lemming.timeBetweenActions[lemming] = Phaser.Math.Between(0, 20);
+    addComponent(this.world, Input, lemming);
+    Velocity.x[lemming] = 0.01;
 
-		Position.x[blueTank] = 100
-		Position.y[blueTank] = 100
-		Sprite.texture[blueTank] = Textures.TankBlue
-		Input.speed[blueTank] = 5
+    Collidable.height[lemming] = 100;
+    Collidable.width[lemming] = 100;
+    Position.x[lemming] = 150;
+    Position.y[lemming] = 100;
+    Sprite.texture[lemming] = Textures.Lemming;
+    Sprite.scale[lemming] = 0.2;
 
-		// create random cpu tanks
-		for (let i = 0; i < 10; ++i) {
-			const tank = addEntity(this.world)
+    // create the systems
+    this.playerSystem = createPlayerSystem(this.cursors);
+    this.cpuSystem = createCPUSystem(this);
+    this.movementSystem = createMovementSystem();
+    this.spriteSystem = createSpriteSystem(this, [
+      "lemming",
+      "background",
+      "ground",
+    ]);
+    this.collisionSystem = createCollisionSystem(this.world);
+    // this.lemmingSystem = createLemmingSystem(this);
+  }
 
-			addComponent(this.world, Position, tank)
-			Position.x[tank] = Phaser.Math.Between(width * 0.25, width * 0.75)
-			Position.y[tank] = Phaser.Math.Between(height * 0.25, height * 0.75)
+  update(t: number, dt: number) {
+    this.spriteSystem(this.world);
+    
+    // run each system in desired order
+    this.playerSystem(this.world);
 
-			addComponent(this.world, Velocity, tank)
-			addComponent(this.world, Rotation, tank)
+    // this.lemmingSystem(this.world);
 
-			addComponent(this.world, Sprite, tank)
-			Sprite.texture[tank] = Phaser.Math.Between(1, 2)
+    this.collisionSystem(this.world);
 
-			addComponent(this.world, CPU, tank)
-			CPU.timeBetweenActions[tank] = Phaser.Math.Between(0, 500)
+    this.cpuSystem(this.world);
 
-			addComponent(this.world, Input, tank)
-			Input.speed[tank] = 10
-		}
+    //this.movementSystem(this.world);
 
-		// create the systems
-		this.playerSystem = createPlayerSystem(this.cursors)
-		this.cpuSystem = createCPUSystem(this)
-		this.movementSystem = createMovementSystem()
-		this.spriteSystem = createSpriteSystem(this, ['tank-blue', 'tank-green', 'tank-red'])
-	}
-
-	update(t: number, dt: number) {
-		// run each system in desired order
-		this.playerSystem(this.world)
-		this.cpuSystem(this.world)
-
-		this.movementSystem(this.world)
-
-		this.spriteSystem(this.world)
-	}
+   
+  }
 }
